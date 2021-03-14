@@ -26,6 +26,7 @@ namespace TradingJournalV2
     {
         public string DirectoryPath = @"C:\Journal\";
         public byte[] AttachedFile;
+        public List<History> HistoryList;
         public MainWindow()
         {
             InitializeComponent();
@@ -35,14 +36,15 @@ namespace TradingJournalV2
         {
             try
             {
-                string fromDate = dpFromDate.SelectedDate.Value.ToShortDateString();
-                string toDate = dpToDate.SelectedDate.Value.ToShortDateString();
+                string fromDate = dpFromDate.SelectedDate.HasValue ? dpFromDate.SelectedDate.Value.ToShortDateString() : null;
+                string toDate = dpToDate.SelectedDate.HasValue ? dpToDate.SelectedDate.Value.ToShortDateString(): null;
 
                 var files = Directory.GetFiles(DirectoryPath);
                 string[] filesBetweenDates = GetFilesBetweenDates(fromDate, toDate, files);
 
-                List<History> histories = MapFilesToHistories(files);
-                lvHistory.ItemsSource = histories;
+                List<History> histories = MapFilesToHistories(filesBetweenDates);
+                this.HistoryList = histories;
+                dgHistoryList.ItemsSource = this.HistoryList;
             }
             catch (Exception ex)
             {
@@ -70,16 +72,24 @@ namespace TradingJournalV2
 
         private string [] GetFilesBetweenDates(string fromDate, string toDate, string[] files)
         {
-            int fromDateNumber = Convert.ToInt32(fromDate.Replace("/", ""));
-            int toDateNumber = Convert.ToInt32(toDate.Replace("/", ""));
+            int fromDateNumber = -1;
+            int toDateNumber = -1;
+            if (toDate != null && fromDate != null)
+            {
+                fromDateNumber = Convert.ToInt32(fromDate.Replace("/", ""));
+                toDateNumber = Convert.ToInt32(toDate.Replace("/", ""));
+            }
+            
             List<string> results = new List<string>();
 
             foreach (string file in files)
             {
-                if (fromDateNumber >= GetDateNumberForFile(file) && toDateNumber <= GetDateNumberForFile(file))
+                if ((fromDateNumber != -1 && fromDateNumber >= GetDateNumberForFile(file)) && (toDateNumber != -1 && toDateNumber <= GetDateNumberForFile(file)))
                 {
                     results.Add(file);
+                    continue;
                 }
+                results.Add(file);
             }
             return results.ToArray();
         }
@@ -161,6 +171,7 @@ namespace TradingJournalV2
         private History GetHistory()
         {
             History history = new History();
+            history.Id = new Guid().ToString();
             history.Trade = cbTrade.Text;
             history.Date = DateTime.Now;
             history.Comments = tbComments.Text.Trim();
@@ -187,6 +198,33 @@ namespace TradingJournalV2
             History history = (sender as Button).DataContext as History;
             ViewCommentsWindow commentsWindow = new ViewCommentsWindow(history.Comments);
             commentsWindow.Show();
+        }
+
+        private string GetFilePathByHistory(History history)
+        {
+            string [] files = Directory.GetFiles(DirectoryPath);
+            string[] historyFiles = files.Where(file => file.Contains(history.Date.ToShortDateString().Replace("/", ""))).ToArray();
+            foreach (string file in historyFiles)
+            {
+                string fileContents = File.ReadAllText(file);
+                History tempHistory = JsonConvert.DeserializeObject<History>(fileContents);
+                if (tempHistory.Id == history.Id)
+                    return file;
+            }
+            return "";
+        }
+
+        private void btnSaveChanges_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (History history in HistoryList)
+            {
+                string filePath = GetFilePathByHistory(history);
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                    Save(history);
+                }
+            }
         }
     }
 }

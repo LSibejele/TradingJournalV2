@@ -8,6 +8,7 @@ namespace TradingJournalV2.Models
 {
     public class History
     {
+        public string Id { get; set; }
         public DateTime Date { get; set; }
         public string Trade { get; set; }
         public string CurrencyPair { get; set; }
