@@ -31,6 +31,7 @@ namespace TradingJournalV2
         private void btnSaveComments_Click(object sender, RoutedEventArgs e)
         {
             CurrentHistory.Comments = tbComments.Text;
+            MessageBox.Show("Comment saved successfully!");
         }
     }
 }

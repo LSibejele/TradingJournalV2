@@ -45,6 +45,7 @@ namespace TradingJournalV2
                 List<History> histories = MapFilesToHistories(filesBetweenDates);
                 this.HistoryList = histories;
                 dgHistoryList.ItemsSource = this.HistoryList;
+                if (HistoryList.Count == 0) MessageBox.Show("No Data!");
             }
             catch (Exception ex)
             {
@@ -103,6 +104,7 @@ namespace TradingJournalV2
                 AttachedFile = File.ReadAllBytes(openFileDialog.FileName);
                 tbAttachedFile.Text = openFileDialog.FileName;
             }
+            MessageBox.Show("File Attached Successfully!");
         }
 
         private void btnSave_Click(object sender, RoutedEventArgs e)
@@ -193,6 +195,7 @@ namespace TradingJournalV2
                     Save(history);
                 }
             }
+            MessageBox.Show("Changes saved successfully!");
         }
 
         private string GetGuid()

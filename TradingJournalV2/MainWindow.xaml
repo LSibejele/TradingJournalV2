@@ -246,6 +246,7 @@
               Grid.Column="4"
               Grid.Row="1"
               Text="Comments"
+              TextWrapping="Wrap"
               VerticalAlignment="Center"
               />
 
@@ -255,6 +256,7 @@
               Grid.Row="2"
               Grid.ColumnSpan="2"
               Grid.RowSpan="6"
+              TextWrapping="Wrap"
             />
 
             <Button 
