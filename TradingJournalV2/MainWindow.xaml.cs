@@ -104,7 +104,6 @@ namespace TradingJournalV2
                 AttachedFile = File.ReadAllBytes(openFileDialog.FileName);
                 tbAttachedFile.Text = openFileDialog.FileName;
             }
-            MessageBox.Show("File Attached Successfully!");
         }
 
         private void btnSave_Click(object sender, RoutedEventArgs e)
