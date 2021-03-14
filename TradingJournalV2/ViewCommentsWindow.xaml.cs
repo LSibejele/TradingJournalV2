@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using TradingJournalV2.Models;
 
 namespace TradingJournalV2
 {
@@ -19,10 +20,17 @@ namespace TradingJournalV2
     /// </summary>
     public partial class ViewCommentsWindow : Window
     {
-        public ViewCommentsWindow(string comments)
+        public History CurrentHistory { get; set; }
+        public ViewCommentsWindow(History history)
         {
             InitializeComponent();
-            tbComments.Text = comments;
+            CurrentHistory = history;
+            tbComments.Text = CurrentHistory.Comments;
+        }
+
+        private void btnSaveComments_Click(object sender, RoutedEventArgs e)
+        {
+            CurrentHistory.Comments = tbComments.Text;
         }
     }
 }

@@ -178,7 +178,7 @@ namespace TradingJournalV2
         private void btnViewComments_Click(object sender, RoutedEventArgs e)
         {
             History history = (sender as Button).DataContext as History;
-            ViewCommentsWindow commentsWindow = new ViewCommentsWindow(history.Comments);
+            ViewCommentsWindow commentsWindow = new ViewCommentsWindow(history);
             commentsWindow.Show();
         }
 
