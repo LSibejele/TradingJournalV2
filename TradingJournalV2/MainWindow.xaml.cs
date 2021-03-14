@@ -36,8 +36,8 @@ namespace TradingJournalV2
         {
             try
             {
-                string fromDate = dpFromDate.SelectedDate.HasValue ? dpFromDate.SelectedDate.Value.ToShortDateString() : null;
-                string toDate = dpToDate.SelectedDate.HasValue ? dpToDate.SelectedDate.Value.ToShortDateString(): null;
+                DateTime fromDate = dpFromDate.SelectedDate.Value;
+                DateTime toDate = dpToDate.SelectedDate.Value;
 
                 var files = Directory.GetFiles(DirectoryPath);
                 string[] filesBetweenDates = GetFilesBetweenDates(fromDate, toDate, files);
@@ -70,34 +70,27 @@ namespace TradingJournalV2
             return HistoryList;
         }
 
-        private string [] GetFilesBetweenDates(string fromDate, string toDate, string[] files)
-        {
-            int fromDateNumber = -1;
-            int toDateNumber = -1;
-            if (toDate != null && fromDate != null)
-            {
-                fromDateNumber = Convert.ToInt32(fromDate.Replace("/", ""));
-                toDateNumber = Convert.ToInt32(toDate.Replace("/", ""));
-            }
-            
+        private string [] GetFilesBetweenDates(DateTime fromDate, DateTime toDate, string[] files)
+        {   
             List<string> results = new List<string>();
+
+            if (fromDate == DateTime.MinValue || toDate == DateTime.MinValue)
+            {
+                foreach (string file in files)
+                {
+                    results.Add(file);
+                }
+                return results.ToArray();
+            }
 
             foreach (string file in files)
             {
-                if ((fromDateNumber != -1 && fromDateNumber >= GetDateNumberForFile(file)) && (toDateNumber != -1 && toDateNumber <= GetDateNumberForFile(file)))
-                {
-                    results.Add(file);
-                    continue;
-                }
+                string json = File.ReadAllText(file);
+                History history = JsonConvert.DeserializeObject<History>(json);
+                if (history.Date >= fromDate && history.Date <= toDate)
                 results.Add(file);
             }
             return results.ToArray();
-        }
-
-        private int GetDateNumberForFile(string file)
-        {
-            string date = file.Substring(file.Length - 13).Replace(".json", "");
-            return Convert.ToInt32(date);
         }
 
         private void btnAttachFile_Click(object sender, RoutedEventArgs e)
@@ -136,25 +129,14 @@ namespace TradingJournalV2
             }
         }
 
-        private string GetFilePath(string historyDate)
+        private string GetFilePath(History history)
         {
-            string filePath = System.IO.Path.Combine(DirectoryPath, $"{historyDate}.json");
-            if (!File.Exists(filePath))
-            {
-                return filePath;
-            }
-            int fileCount = Directory.GetFiles(DirectoryPath).Where((file) =>
-            {
-                return file.Contains(historyDate);
-            }).Count();
-            
-            filePath = System.IO.Path.Combine(DirectoryPath, $"{fileCount}_{historyDate}.json");
-            return filePath;
+            return System.IO.Path.Combine(DirectoryPath, $"{history.Id}.json");
         }
 
         private void CreateJsonFile(History history)
         {
-            string filePath = GetFilePath(history.Date.ToShortDateString().Replace("/", ""));
+            string filePath = GetFilePath(history);
             try 
             {
                 using (FileStream fileStream = File.Create(filePath))
@@ -171,7 +153,7 @@ namespace TradingJournalV2
         private History GetHistory()
         {
             History history = new History();
-            history.Id = new Guid().ToString();
+            history.Id = GetGuid();
             history.Trade = cbTrade.Text;
             history.Date = DateTime.Now;
             history.Comments = tbComments.Text.Trim();
@@ -200,31 +182,25 @@ namespace TradingJournalV2
             commentsWindow.Show();
         }
 
-        private string GetFilePathByHistory(History history)
-        {
-            string [] files = Directory.GetFiles(DirectoryPath);
-            string[] historyFiles = files.Where(file => file.Contains(history.Date.ToShortDateString().Replace("/", ""))).ToArray();
-            foreach (string file in historyFiles)
-            {
-                string fileContents = File.ReadAllText(file);
-                History tempHistory = JsonConvert.DeserializeObject<History>(fileContents);
-                if (tempHistory.Id == history.Id)
-                    return file;
-            }
-            return "";
-        }
-
         private void btnSaveChanges_Click(object sender, RoutedEventArgs e)
         {
             foreach (History history in HistoryList)
             {
-                string filePath = GetFilePathByHistory(history);
+                string filePath = GetFilePath(history);
                 if (File.Exists(filePath))
                 {
                     File.Delete(filePath);
                     Save(history);
                 }
             }
+        }
+
+        private string GetGuid()
+        {
+            var ticks = new DateTime(2016, 1, 1).Ticks;
+            var ans = DateTime.Now.Ticks - ticks;
+            var uniqueId = ans.ToString("x");
+            return uniqueId;
         }
     }
 }
